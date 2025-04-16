@@ -4,11 +4,14 @@
   "description": "Testing Stripe",
   "main": "index.js",
   "scripts": {
-    "test": "npm run"
+    "test": "npm run",
+    "dev": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0"
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "pg": "^8.14.1"
   }
 }
