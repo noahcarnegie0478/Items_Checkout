@@ -1,8 +1,21 @@
 const express = require("express");
 const app = express();
+
 var cors = require("cors");
 const bodyParser = require("body-parser");
 require("dotenv").config();
+
+//STRIPE SET UP
+const stripe = require("stripe")(process.env.STRIPE_SECRETKEY);
+
+////////////////////////////////////////
+
+//implement webhook into code
+//download stripe
+//listen to event and print
+//create database ordered and store
+//clear table cart.
+//send email to customer
 app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
@@ -18,6 +31,53 @@ app.use(function (req, res, next) {
   );
   next();
 });
+///test receive item
+app.post("/create-checkout", async (req, res) => {
+  const item = JSON.parse(req.body.item);
+  // const { item } = req.body;
+  console.log(item);
+});
+///////////////////////////////////
+
+app.post("/create-checkout-session", async (req, res) => {
+  try {
+    const { item } = req.body;
+    console.log(
+      item.map(itm => ({
+        price_data: {
+          currency: "aud",
+          unit_amount: itm.price,
+          product_data: {
+            name: itm.name,
+
+            images: [itm.image],
+          },
+        },
+        quantity: 1,
+      }))
+    );
+    const session = await stripe.checkout.sessions.create({
+      line_items: item.map(itm => ({
+        price_data: {
+          currency: "aud",
+          unit_amount: itm.price,
+          product_data: {
+            name: itm.name,
+
+            images: [itm.image],
+          },
+        },
+        quantity: 1,
+      })),
+      mode: "payment",
+      success_url: `${process.env.SUCCESS}?success=true`,
+      cancel_url: `${process.env.CANCLE}?canceled=true`,
+    });
+    console.log(session);
+    res.json({ url: session.url, id: session.id });
+  } catch (error) {}
+});
+//////////////////////////////////
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -89,3 +149,24 @@ app.get("/production", getAllTable);
 app.listen(3000, () => {
   console.log(`Server listening on port 3000`);
 });
+
+// const session = await stripe.checkout.sessions.create({
+//   line_items: [
+//     {
+//
+//       price_data: {
+//         currency: "usd",
+//         unit_amount: 2000,
+//         product_data: {
+//           name: "T-shirt",
+//           description: "Comfortable cotton t-shirt",
+//           images: ["https://example.com/t-shirt.png"],
+//         },
+//       },
+//       quantity: 1,
+//     },
+//   ],
+//   mode: "payment",
+//   success_url: "https://example.com/success?session_id={CHECKOUT_SESSION_ID}",
+//   cancel_url: "https://example.com/cancel",
+// });
